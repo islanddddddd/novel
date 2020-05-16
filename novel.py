@@ -6,7 +6,7 @@ import requests, sys, time
 import json
 
 
-class down(object):
+class down_one(object):
     def __init__(self):
         self.server = "https://qxs.la"  # 网站地址
         self.target = "https://qxs.la/181241/"  # 小说地址
@@ -18,8 +18,6 @@ class down(object):
         self.names = []  # 章节名字
         self.urls = []  # 章节地址
         self.nums = []  # 章节总数
-
-        self.write_flag = False
 
     """
     函数说明:获取章节下载链接
@@ -61,8 +59,6 @@ class down(object):
                 texts = texts[0].text.replace('　　', '\n\u3000\u3000')
                 texts = re.sub('.*（全小说无弹窗）', '', texts)
                 texts = texts.replace('www@22ff!com', '')
-                # # 添加标记
-                # texts=texts+"{'last':'"+"'}"
                 return texts
             except:
                 if tries < (maxTryNum - 1):
@@ -94,20 +90,14 @@ class down(object):
                 f.write('作者:' + self.author + '\n')
                 f.writelines('简介:\n' + self.desc)
                 f.write('\n\n')
-                # 进度标记
-                # f.write('{"now":"999"}')  # 不知道为啥找不到这个;知道为啥了,因为这是个if else语句,根本不执行else内容
-                # f.write('{"now":"' + str(num) + '"}')
-                f.write('{"now":"' + str(num) + '"}')
-
         # 若存在
         else:
             with open(path, 'rt') as f:
                 last = f.readlines()[-1]
                 last = int(json.loads(last)['now'])
-                print('last:%d' % last)
-                print('num:%d' % num)
                 if num <= last:
                     return
+
         # 写入
         with open(path, 'a', encoding='utf-8') as f:
             f.write('\n' + name + '\n')
@@ -117,22 +107,13 @@ class down(object):
 
 
 if __name__ == "__main__":
-    dl = down()
+    dl = down_one()
     dl.get_chapters()
-    # print(dl.names)
-    # print(dl.nums)
-    # print(dl.names, dl.urls)
-    print(dl.title + " 下载开始:")
-    # print(dl.get_contents(dl.urls[0]))
 
     path = './novel/' + dl.novel_class + '/' + dl.title + '.txt'
     for i in range(dl.nums):
-        print('开始下载%5d章' % (i + 1))  # 开始下载i+1章
         dl.writer(dl.names[i], path, dl.get_contents(dl.urls[i]), i)
-        # sys.stdout.write("  已下载:%.3f" % float(i / dl.nums))   # 不管用
-        # sys.stdout.write("\r" + dl.names[i] + " %.5f" % float(i / dl.nums)+"%")   # 不好用
         # sys.stdout.write("\r%-20s %-0.5f%% \t" % (dl.names[i], float(i / dl.nums)))  # 完成品
         # sys.stdout.flush()
         print("\r%-20s %-0.5f%% \t" % (dl.names[i], float(i / dl.nums)))  # print
-        # print('-------------------------------------------')
     print("下载完成")
