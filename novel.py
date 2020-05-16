@@ -61,6 +61,8 @@ class down(object):
                 texts = texts[0].text.replace('　　', '\n\u3000\u3000')
                 texts = re.sub('.*（全小说无弹窗）', '', texts)
                 texts = texts.replace('www@22ff!com', '')
+                # # 添加标记
+                # texts=texts+"{'last':'"+"'}"
                 return texts
             except:
                 if tries < (maxTryNum - 1):
@@ -71,29 +73,35 @@ class down(object):
 
     """
     函数说明:写入文件
+    参数说明:
+        name:章节名
+        path:文件路径
+        text:章节内容
+        num:章节号
     """
 
-    def writer(self, name, path, text):
+    def writer(self, name, path, text, num):
         # print(path)
+
+        # 判断novel文件夹是否存在
         if not os.path.exists('novel'):
             os.mkdir('novel')
 
-        if os.path.exists('novel/' + self.novel_class):
-            if not self.write_flag:
+        if os.path.exists('novel/' + self.novel_class):  # 判断分类文件夹存在,不存在就创建
+            if not self.write_flag:  # 仅在未写入时进行以下代码
+                # 如果小说已经被创建,就移除它,重新下载
                 if os.path.exists(path):
                     os.remove(path)
-                    with open(path, 'a', encoding='utf-8') as f:
-                        f.write('作者:' + self.author + '\n')
-                        f.writelines('简介:\n' + self.desc)
-                        f.write('\n\n')
-                self.write_flag = True
+                # 创建新文件并写入简介
+                with open(path, 'a', encoding='utf-8') as f:
+                    f.write('作者:' + self.author + '\n')
+                    f.writelines('简介:\n' + self.desc)
+                    f.write('\n\n')
+            self.write_flag = True  # 写入真
         else:
             os.mkdir('novel/' + self.novel_class)
 
-            # if not self.down:
-            #     if os.path.exists(path):
-            #         os.remove(path)
-        with open(path, 'a', encoding='utf-8') as f:
+        with open(path, 'a', encoding='utf-8') as f:  # 写入
             f.write(name + '\n')
             f.writelines(text)
             f.write('\n\n')
@@ -110,7 +118,8 @@ if __name__ == "__main__":
 
     path = './novel/' + dl.novel_class + '/' + dl.title + '.txt'
     for i in range(dl.nums):
-        dl.writer(dl.names[i], path, dl.get_contents(dl.urls[i]))
+        print(i)
+        dl.writer(dl.names[i], path, dl.get_contents(dl.urls[i]), i)
         # sys.stdout.write("  已下载:%.3f" % float(i / dl.nums))   # 不管用
         # sys.stdout.write("\r" + dl.names[i] + " %.5f" % float(i / dl.nums)+"%")   # 不好用
         # sys.stdout.write("\r%-20s %-0.5f%% \t" % (dl.names[i], float(i / dl.nums)))  # 完成品
