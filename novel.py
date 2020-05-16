@@ -1,9 +1,9 @@
 # encoding=utf8
 import os
 import re
-
 from bs4 import BeautifulSoup
 import requests, sys, time
+import json
 
 
 class down(object):
@@ -77,34 +77,43 @@ class down(object):
         name:章节名
         path:文件路径
         text:章节内容
-        num:章节号
+        num:当前进度
     """
 
     def writer(self, name, path, text, num):
         # print(path)
-
         # 判断novel文件夹是否存在
         if not os.path.exists('novel'):
             os.mkdir('novel')
-
-        if os.path.exists('novel/' + self.novel_class):  # 判断分类文件夹存在,不存在就创建
-            if not self.write_flag:  # 仅在未写入时进行以下代码
-                # 如果小说已经被创建,就移除它,重新下载
-                if os.path.exists(path):
-                    os.remove(path)
-                # 创建新文件并写入简介
-                with open(path, 'a', encoding='utf-8') as f:
-                    f.write('作者:' + self.author + '\n')
-                    f.writelines('简介:\n' + self.desc)
-                    f.write('\n\n')
-            self.write_flag = True  # 写入真
-        else:
+        # 判断分类文件夹存在,不存在就创建
+        if not os.path.exists('novel/' + self.novel_class):
             os.mkdir('novel/' + self.novel_class)
+        # 判断文件是否存在,不存在则写入小说简介和进度标记
+        if not os.path.exists(path):
+            with open(path, 'a', encoding='utf-8') as f:
+                f.write('作者:' + self.author + '\n')
+                f.writelines('简介:\n' + self.desc)
+                f.write('\n\n')
+                # 进度标记
+                # f.write('{"now":"999"}')  # 不知道为啥找不到这个;知道为啥了,因为这是个if else语句,根本不执行else内容
+                # f.write('{"now":"' + str(num) + '"}')
+                f.write('{"now":"' + str(num) + '"}')
 
-        with open(path, 'a', encoding='utf-8') as f:  # 写入
-            f.write(name + '\n')
+        # 若存在
+        else:
+            with open(path, 'rt') as f:
+                last = f.readlines()[-1]
+                last = int(json.loads(last)['now'])
+                print('last:%d' % last)
+                print('num:%d' % num)
+                if num <= last:
+                    return
+        # 写入
+        with open(path, 'a', encoding='utf-8') as f:
+            f.write('\n' + name + '\n')
             f.writelines(text)
             f.write('\n\n')
+            f.write('{"now":"' + str(num) + '"}')
 
 
 if __name__ == "__main__":
@@ -118,11 +127,12 @@ if __name__ == "__main__":
 
     path = './novel/' + dl.novel_class + '/' + dl.title + '.txt'
     for i in range(dl.nums):
-        print(i)
+        print('开始下载%5d章' % (i + 1))  # 开始下载i+1章
         dl.writer(dl.names[i], path, dl.get_contents(dl.urls[i]), i)
         # sys.stdout.write("  已下载:%.3f" % float(i / dl.nums))   # 不管用
         # sys.stdout.write("\r" + dl.names[i] + " %.5f" % float(i / dl.nums)+"%")   # 不好用
         # sys.stdout.write("\r%-20s %-0.5f%% \t" % (dl.names[i], float(i / dl.nums)))  # 完成品
         # sys.stdout.flush()
         print("\r%-20s %-0.5f%% \t" % (dl.names[i], float(i / dl.nums)))  # print
+        # print('-------------------------------------------')
     print("下载完成")
